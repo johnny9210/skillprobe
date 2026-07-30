@@ -1,0 +1,120 @@
+[project]
+name = "skillprobe"
+version = "0.0.1"
+description = "Detonate an agent skill in a sandbox and judge what it actually did"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11,<4.0"
+keywords = [
+    "agent-skills", "security", "supply-chain", "deepagents", "langchain",
+    "sandbox", "sarif", "detonation", "skill-vetting",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+# Zero runtime dependencies: static review and the rule engine are stdlib-only,
+# so a security reviewer can run skillprobe without pulling an LLM framework
+# into the environment. The detonation extra opts into deepagents.
+dependencies = []
+
+[project.optional-dependencies]
+# Live detonation drives a real agent through a deepagents backend.
+detonate = ["deepagents>=0.7.0"]
+
+[project.scripts]
+skillprobe = "skillprobe.cli:main"
+
+[project.urls]
+Repository = "https://github.com/jik/skillprobe"
+Issues = "https://github.com/jik/skillprobe/issues"
+
+[build-system]
+requires = ["setuptools>=83.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
+
+# Dev toolchain mirrors deepagents so code moves upstream without friction.
+[dependency-groups]
+test = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "pytest-xdist",
+    "ruff>=0.15,<0.16",
+    "deepagents>=0.7.0",
+]
+
+[tool.uv]
+# When a shared core package is added later (e.g. libs/probe-core consumed by
+# both skillprobe and a future mcpprobe), wire it here as a local editable:
+#   [tool.uv.sources]
+#   probe-core = { path = "../probe-core", editable = true }
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",  # trailing comma — conflicts with the formatter
+    "ISC001",  # implicit string concatenation — conflicts with the formatter
+    "PLR0913", # too many arguments — rule tables take many
+    "PLR2004", # magic values — thresholds read fine inline
+    "S603",    # subprocess call — this is a security tool; running commands is the point
+    "S108",    # hardcoded /tmp — appears in detection patterns and test fixtures, not runtime
+    "ANN401",  # Any — the backend proxy wraps arbitrary backends; Any is correct there
+    "D105",    # magic-method docstrings — behaviour is conventional (__repr__, __len__)
+    "D107",    # __init__ docstring — documented at the class level (google convention)
+    "FBT001",  # boolean positional — deliberate small API surface (raise_on_deny, ok)
+    "FBT002",
+    "PLC0415", # import-outside-top-level — cli.py lazy-imports the UI to keep startup light
+    "EM101",   # raw string in exception — inline messages read fine at this size
+    "EM102",
+    "TRY003",  # long exception messages — same
+    "TC001",   # typing-only import moves — churn without payoff at this size
+    "TC003",
+    "SIM905",  # split-static-string — `"a b c".split()` is more readable for word lists
+    "N818",    # Error suffix — DeniedByPolicy reads better without it and is a public name
+    "TD",      # TODO formatting
+    "FIX",     # flags TODOs
+]
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.isort]
+known-first-party = ["skillprobe"]
+combine-as-imports = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "D", "S101", "S105", "S106", "PLR2004", "ARG001", "ARG002", "INP001", "PT006", "PT011", "PT018"]
+"examples/**" = ["INP001", "T201", "D", "S", "ANN", "BLE001"]
+"src/skillprobe/cli.py" = ["T201"]   # a CLI prints its results to the console
+"src/skillprobe/web.py" = ["T201", "E501", "S110", "BLE001"]  # console banner; embedded HTML is one long string; resilient serve loop
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "integration: exercises real deepagents backends (needs the detonate extra)",
+]

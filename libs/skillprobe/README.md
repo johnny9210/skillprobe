@@ -1,0 +1,125 @@
+# skillprobe
+
+Detonate an agent skill in a sandbox and judge what it actually did.
+
+Static skill scanners read `SKILL.md`. In July 2026 the [Cloak and
+Detonate](https://arxiv.org/abs/2607.02357) paper measured eight of them against
+1,613 real malicious skills: self-extracting packing bypassed **every scanner at
+over 90%**, and structural obfuscation reached 96% against a hybrid
+deterministic+LLM scanner. Packing works because the payload is not in the file
+at install time — it is restored during agent execution.
+
+skillprobe takes the other half of that paper seriously: judge the skill by the
+operations it performs, not by how its source reads.
+
+```bash
+uv add skillprobe
+
+skillprobe scan path/to/SKILL.md    # review one skill, or a tree of them
+skillprobe scan skills/ --json      # machine-readable, exits non-zero on findings
+skillprobe ui                       # local review UI, no account, nothing uploaded
+```
+
+The UI takes a dropped `SKILL.md` and shows the verdict, the findings, and the
+operation timeline they were derived from — clicking a finding highlights the
+operations that produced it, so the flow is followable rather than a verdict to
+be taken on trust. It is stdlib-only and binds to `127.0.0.1`: reviewing an
+untrusted skill should not require standing up a server.
+
+## How it works
+
+deepagents routes every filesystem and shell operation an agent performs through
+a single `BackendProtocol` object — `execute`, `read`, `write`, `edit`,
+`delete`, `ls`, `glob`, `grep`, `upload_files`, `download_files`. That is the
+complete surface. `ObservingBackend` wraps it, so a skill cannot touch a file or
+spawn a process without producing an event.
+
+The rule engine then reasons over the *ordered stream*, which is what separates
+it from pattern matching on a file:
+
+| observed | verdict |
+|---|---|
+| Read `~/.aws/credentials` | high — worth knowing |
+| Run `curl https://…` | low — ordinary |
+| **Read, then curl** | **critical** — that is the exfiltration flow |
+
+Neither operation is conclusive alone. The ordering is the finding.
+
+## Two modes
+
+**Static review** (`skillprobe scan`, the UI) recovers the operations a skill
+*instructs* — from code fences, indented blocks, inline spans and prose — and
+runs the flow rules over that sequence. Base64 blobs are decoded and their
+contents spliced back in at the position they appeared, so packing hides a
+payload from a reader but not from the analysis. Nothing executes, so this is
+safe to point at a skill you do not trust.
+
+**Detonation** (`ObservingBackend`, the `detonate` extra) judges operations
+actually observed while an agent runs the skill. Stronger, and it needs
+isolation — see [THREAT_MODEL.md](THREAT_MODEL.md).
+
+## What it catches
+
+`CREDENTIAL_EXFILTRATION` · `OBFUSCATED_EXECUTION` (decode-then-execute, the
+run-time signature of packing) · `REMOTE_CODE_EXECUTION` (`curl … | sh`) ·
+`DESTRUCTIVE_COMMAND` · `PERSISTENCE` (shell profiles, cron, git hooks,
+`.claude/settings.json`) · `PRIVILEGE_ESCALATION` · `WORKSPACE_ESCAPE` ·
+`CRED_ACCESS` · `ENV_HARVEST` · `NETWORK_EGRESS`
+
+Findings carry the event sequence numbers they came from, so a reviewer can
+follow the flow rather than trust a verdict. Scope is parsed, not
+pattern-matched, where that matters: `rm -rf build/` and `rm -rf /root/tmp` are
+housekeeping, `rm -rf /` and `rm -rf ~` are not, and `echo "rm -rf /"` is
+neither.
+
+## False positives
+
+Measured against the 232 human-authored skills in
+[SkillsBench](https://github.com/benchflow-ai/skillsbench): **221 clean
+(95.3%)**. The three false-positive classes it surfaced — `nc = Dataset(path)`
+read as netcat, `pip install requests` as an HTTP client, every `sudo apt-get
+install` as privilege escalation — are each now a regression test. Grading
+routine setup at the same severity as a real finding is how a scanner trains
+people to ignore it.
+
+## Enforcement, not only observation
+
+A skill that says "ask the user before proceeding" is not a control — the agent
+can satisfy that instruction by asking itself. Policies run at the backend
+interface, below anything the model can talk its way past:
+
+```python
+def no_credentials(op, args):
+    if ".aws/credentials" in str(args.get("file_path", "")):
+        return "credential access is not permitted"
+
+backend = ObservingBackend(inner, policy=no_credentials)
+```
+
+Denied operations are still recorded — a blocked attempt is evidence.
+
+## Status
+
+Early, but the pieces below work and are tested — 75 tests, including
+integration against real deepagents backends.
+
+- static review, CLI and UI — **working**
+- observation layer + flow rules — **working**
+- policy gate (execution-layer denial) — **working**
+- container isolation — **not built**; detonation runs on the host for now
+- LLM-driven runner over a SkillsBench task, end to end — **not built**
+- OS-level observer (closes the bundled-script gap) — **not built**
+- SARIF output — **not built**
+
+## Development
+
+```bash
+make install      # uv sync --group test
+make test         # unit tests
+make integration  # against real deepagents backends
+make lint         # ruff (ALL) + format check
+make demo         # packed-skill detonation demo
+make ui           # local review UI
+```
+
+MIT.
