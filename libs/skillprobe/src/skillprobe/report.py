@@ -9,7 +9,7 @@ from typing import Any
 from skillprobe.events import Event
 from skillprobe.extract import extract
 from skillprobe.judge import Judge
-from skillprobe.rules import SEVERITY_ORDER, Finding, analyze
+from skillprobe.rules import SEVERITY_ORDER, Finding, analyze, analyze_document
 
 # What a marketplace gate would do with each severity.
 VERDICT = {
@@ -92,7 +92,11 @@ def scan_text(
     a confidence, because they are opinions rather than matches.
     """
     extraction = extract(text)
-    findings = analyze(extraction.events, workspace=workspace)
+    findings = [
+        *analyze(extraction.events, workspace=workspace),
+        *analyze_document(text),
+    ]
+    findings.sort(key=lambda f: SEVERITY_ORDER[f.severity])
     if judge is not None:
         findings = [*findings, *judge.review(text)]
         findings.sort(key=lambda f: SEVERITY_ORDER[f.severity])

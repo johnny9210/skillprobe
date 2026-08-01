@@ -112,6 +112,37 @@ pattern-matched, where that matters: `rm -rf build/` and `rm -rf /root/tmp` are
 housekeeping, `rm -rf /` and `rm -rf ~` are not, and `echo "rm -rf /"` is
 neither.
 
+## Coverage against attacks confirmed in the wild
+
+[MaliciousAgentSkillsBench](https://github.com/protectskills/MaliciousAgentSkillsBench)
+(USENIX Security 2026) publishes the attack-pattern labels for 157
+behaviourally-confirmed malicious skills found on public marketplaces. Mapping
+skillprobe's rules against that distribution:
+
+| attack pattern | in 157 skills | covered by |
+|---|---:|---|
+| Remote Code Execution | 159 | `REMOTE_CODE_EXECUTION` |
+| Behavior Manipulation | 119 | judge · concealment / approval theatre |
+| Network sniffing / Credential theft | 112 | `CRED_ACCESS` + `CREDENTIAL_EXFILTRATION` |
+| External Transmission | 86 | `NETWORK_EGRESS` |
+| Instruction Override | 39 | `INSTRUCTION_OVERRIDE` |
+| Context Leakage | 30 | `CONTEXT_LEAKAGE` |
+| Hardcoded Tokens | 17 | `HARDCODED_TOKEN` |
+| Hidden Instructions | 16 | judge · run-time indirection |
+| Code Obfuscation | 15 | `OBFUSCATED_EXECUTION` |
+| File System Scan | 13 | `FILESYSTEM_SWEEP` |
+| Privilege Escalation | 12 | `PRIVILEGE_ESCALATION` |
+| Command Injection | 5 | — **not yet covered** |
+| Excessive Permissions | 4 | `EXCESSIVE_PERMISSIONS` |
+
+**627 / 632 pattern instances (99.2%)**, with no confirmed-malicious skill
+falling entirely outside the ruleset. Five of these rules exist *because* of
+this mapping — the first pass covered 82.9% and missed five skills entirely.
+
+This measures taxonomy coverage, not detection rate: the dataset withholds the
+skill bodies to prevent misuse, so it says which attack classes skillprobe can
+express, not what fraction of real files it would flag.
+
 ## False positives
 
 Measured against the 232 human-authored skills in

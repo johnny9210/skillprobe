@@ -34,6 +34,7 @@ _SHELL_LANGS = {"", "bash", "sh", "shell", "zsh", "console", "terminal", "shells
 _COMMAND_START = re.compile(
     r"^\s*(?:\$\s*|#\s*)?"
     r"(sudo|env|curl|wget|nc|ncat|rm|dd|mkfs|shred|chmod|chown|cat|cp|mv|ln|"
+    r"find|fd|grep|rg|locate|"
     r"echo|printf|base64|openssl|xxd|eval|export|source|python[0-9.]*|python3|"
     r"node|npm|npx|pip[0-9.]*|pip3|uv|go|cargo|git|ssh|scp|rsync|tar|unzip|"
     r"crontab|systemctl|launchctl|osascript|powershell|bash|sh|zsh|make|docker)"

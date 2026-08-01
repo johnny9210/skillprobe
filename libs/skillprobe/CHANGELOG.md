@@ -26,6 +26,23 @@ to [Semantic Versioning](https://semver.org/).
   three false-positive classes it surfaced (`nc = Dataset(...)`,
   `pip install requests`, `sudo apt-get install`) are now regression tests.
 
+### Added — rules for attacks confirmed in the wild
+- Mapped the ruleset against the 157 behaviourally-confirmed malicious skills in
+  MaliciousAgentSkillsBench (USENIX Security 2026). The first pass covered 82.9%
+  of pattern instances and missed five skills entirely; five new rules close
+  that to **99.2%**, with no confirmed-malicious skill left uncovered.
+- New: `INSTRUCTION_OVERRIDE` (39/157), `CONTEXT_LEAKAGE` (30), `HARDCODED_TOKEN`
+  (17), `FILESYSTEM_SWEEP` (13), `EXCESSIVE_PERMISSIONS` (4).
+- Added `analyze_document()`: some risks are properties of the file rather than
+  of any operation — an instruction to ignore prior rules is something the skill
+  *is*, not something the agent *does*.
+- Prose rules now respect negation. "Never bypass safety checks" is the opposite
+  of an instruction to bypass them; without the guard the strictest skills were
+  flagged hardest.
+- `find`, `grep`, `fd`, `rg` and `locate` are now recognised as commands during
+  extraction — previously a secret sweep was never even seen.
+- Still uncovered: Command Injection (5/157).
+
 ### Added — model judgment
 - `Judge` scores a skill against rubrics for what deterministic rules cannot
   read: whether the skill *works* (description never triggers, no-op padding,

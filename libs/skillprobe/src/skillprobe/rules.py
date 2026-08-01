@@ -283,6 +283,114 @@ ENV_HARVEST = re.compile(
     r"(\b(env|printenv|set)\b\s*(\||>)|\bos\.environ\b|\bprocess\.env\b)", re.IGNORECASE
 )
 
+# --- patterns confirmed in the wild --------------------------------------
+# The categories below come from the 157 behaviourally-confirmed malicious
+# skills in MaliciousAgentSkillsBench (USENIX Security 2026). They are the
+# classes that appear in real attacks but have no shape a command parser sees.
+
+# Instruction Override (39/157). A skill that tells the agent to disregard its
+# own operating rules is not configuring itself, it is hijacking the session.
+INSTRUCTION_OVERRIDE = re.compile(
+    r"""(
+      \bignore\b[^.\n]{0,40}\b(previous|prior|earlier|above|all)\b[^.\n]{0,20}
+        \b(instruction|rule|prompt|direction|guideline)s?\b
+    | \bdisregard\b[^.\n]{0,40}\b(instruction|rule|prompt|guideline|polic)\w*
+    | \boverrid\w+\b[^.\n]{0,40}\b(system|default|safety|security)\b[^.\n]{0,20}
+        \b(prompt|instruction|rule|setting)s?\b
+    | \bforget\b[^.\n]{0,30}\b(everything|all|previous|prior)\b
+    | \byou\s+are\s+no\s+longer\b
+    | \bfrom\s+now\s+on\b[^.\n]{0,40}\b(ignore|disregard|bypass|skip)\b
+    | \bbypass\b[^.\n]{0,30}\b(safety|security|guardrail|restriction|check)s?\b
+    | \bdo\s+not\s+follow\b[^.\n]{0,30}\b(system|previous|prior)\b
+    )""",
+    re.VERBOSE | re.IGNORECASE,
+)
+
+# Context Leakage (30/157). Sending the conversation, system prompt or history
+# somewhere is exfiltration of the user's data even when no file is read.
+# The transmission verb alone is not enough: "two requests share the first K
+# conversation turns" describes prompt caching, so a destination is required.
+CONTEXT_LEAKAGE = re.compile(
+    r"""(
+      \b(send|post|upload|transmit|forward|exfiltrate)\b[^.\n]{0,50}
+        \b(system\s+prompt|conversation|chat\s+history|message\s+history
+          |context\s+window|full\s+context|transcript)s?\b
+        [^.\n]{0,60}\b(to|into|at)\b[^.\n]{0,20}(https?://|\bendpoint\b|\bserver\b|\bwebhook\b)
+    | \b(system\s+prompt|conversation|chat\s+history|transcript)\b[^.\n]{0,40}
+        \b(to|into)\b[^.\n]{0,20}\bhttps?://
+    | \bdump\b[^.\n]{0,30}\b(context|conversation|prompt|history)\b
+        [^.\n]{0,40}(https?://|\bendpoint\b|\bserver\b)
+    | \bexfiltrat\w+
+    )""",
+    re.VERBOSE | re.IGNORECASE,
+)
+
+# Hardcoded Tokens (17/157). A live credential embedded in a shared skill leaks
+# to everyone who installs it.
+HARDCODED_TOKEN = re.compile(
+    r"""(
+      \b(sk-[A-Za-z0-9]{16,}|sk-ant-[A-Za-z0-9_-]{16,})
+    | \bghp_[A-Za-z0-9]{20,} | \bgithub_pat_[A-Za-z0-9_]{20,}
+    | \bxox[baprs]-[A-Za-z0-9-]{10,}
+    | \bAKIA[0-9A-Z]{16}\b
+    | \bAIza[0-9A-Za-z_-]{20,}
+    | \bey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}
+    | (?i:\b(api[_-]?key|secret|token|password|passwd)\b\s*[=:]\s*
+        ["']?[A-Za-z0-9_\-/+]{16,}["']?)
+    )""",
+    re.VERBOSE,
+)
+
+# File System Scan (13/157). Sweeping the disk for secrets is reconnaissance;
+# each individual read looks ordinary, the sweep does not.
+# Note: `\b` does not match between a space and a hyphen — both are non-word
+# characters — so flags are matched as `-name\b`, never `\b-name\b`.
+FILESYSTEM_SWEEP = re.compile(
+    r"""(
+      \b(find|fd)\b[^|;\n]{0,60}-name\b[^|;\n]{0,30}
+        ["']?\*?\.?(env|pem|key|p12|pfx|credential|secret|id_rsa)\w*
+    | \b(grep|rg)\b[^|;\n]{0,40}-[a-zA-Z]*[rR][a-zA-Z]*\b[^|;\n]{0,60}
+        (password|passwd|secret|api[_-]?key|token|BEGIN\s+\w*\s*PRIVATE)
+    | \b(find|fd|ls)\b[^|;\n]{0,30}(~|\$HOME|/home\b|/Users\b)[^|;\n]{0,40}-name\b
+    | \blocate\b[^|;\n]{0,20}\b(id_rsa|credentials|\.env)\b
+    )""",
+    re.VERBOSE | re.IGNORECASE,
+)
+
+# Excessive Permissions (4/157). A skill that claims unrestricted tool access
+# has widened the blast radius of every other finding.
+# Restricted to configuration syntax and named flags: a bare `tools: *` pattern
+# also matches the markdown in "**Analysis Tools:** See tools.md", and prose
+# words like "unrestricted" appear in ordinary writing.
+EXCESSIVE_PERMISSIONS = re.compile(
+    r"""(
+      (?i:allowed[_-]?tools|allowedTools|permissions)\s*[:=]\s*
+        (["']\*["']|\*\s*$|\[\s*["']\*["']\s*\])
+    | (?i:--dangerously-skip-permissions|--yolo\b|--no-confirm\b|--auto-approve\b)
+    | (?i:\bskip\s+all\s+permission\s+(check|prompt)s?\b)
+    )""",
+    re.VERBOSE | re.MULTILINE,
+)
+
+# Prose rules read intent, and intent flips under negation: "never bypass
+# safety checks" is the opposite of an instruction to bypass them. Without this
+# guard the strictest skills get flagged the hardest.
+_NEGATED = re.compile(
+    r"\b(never|not|n't|avoid|refuse|prohibit\w*|forbid\w*|must\s+not|should\s+not"
+    r"|do\s+not|don't|cannot|without)\b[^.\n]{0,40}$",
+    re.IGNORECASE,
+)
+
+
+def _is_negated(text: str, match: re.Match[str]) -> bool:
+    """True when the sentence leading into `match` negates it."""
+    sentence_start = max(
+        text.rfind(".", 0, match.start()),
+        text.rfind("\n", 0, match.start()),
+    )
+    lead = text[sentence_start + 1 : match.start()]
+    return bool(_NEGATED.search(lead))
+
 
 @dataclass
 class _Taint:
@@ -419,6 +527,15 @@ class Analyzer:
                 "skills restore a payload that static inspection could not see.",
                 "Inline the actual command. There is no legitimate reason for a skill to "
                 "decode-then-execute.",
+            ),
+            (
+                FILESYSTEM_SWEEP,
+                "FILESYSTEM_SWEEP",
+                "high",
+                "Sweeps the filesystem for secrets",
+                "The command searches broadly for credential files or secret-looking "
+                "content. Any single read looks ordinary; the sweep is reconnaissance.",
+                "Read the specific file the task needs. A skill should know which path it wants.",
             ),
             (
                 ENV_HARVEST,
@@ -559,3 +676,84 @@ class Analyzer:
 def analyze(events: Iterable[Event], *, workspace: str = "/root") -> list[Finding]:
     """Convenience wrapper around `Analyzer`."""
     return Analyzer(workspace=workspace).analyze(events)
+
+
+# Risks that are properties of the document rather than of any one operation.
+# An instruction to ignore prior rules, or a token pasted into the prose, is not
+# something an agent *does* — it is something the file *is*, so it is matched
+# against the source rather than against the recovered operation stream.
+_DOCUMENT_RULES: list[tuple[re.Pattern[str], str, Severity, str, str, str]] = [
+    (
+        INSTRUCTION_OVERRIDE,
+        "INSTRUCTION_OVERRIDE",
+        "critical",
+        "Skill tries to override the agent's own instructions",
+        "The skill directs the agent to ignore, disregard or bypass the rules it "
+        "operates under. A skill configures a task; it does not get to rewrite the "
+        "session it was loaded into.",
+        "Remove the override. State what the skill needs positively, without "
+        "referring to the agent's existing instructions.",
+    ),
+    (
+        CONTEXT_LEAKAGE,
+        "CONTEXT_LEAKAGE",
+        "critical",
+        "Skill sends conversation or prompt content off the machine",
+        "The skill directs the agent to transmit the system prompt, conversation or "
+        "history. That is the user's data leaving, even though no credential file is "
+        "ever opened.",
+        "Remove the transmission. If telemetry is genuinely needed, send only "
+        "explicit, non-content fields and say so plainly.",
+    ),
+    (
+        HARDCODED_TOKEN,
+        "HARDCODED_TOKEN",
+        "high",
+        "A credential appears to be embedded in the skill",
+        "A live token shipped inside a shared skill leaks to everyone who installs "
+        "it, and outlives any attempt to unpublish it.",
+        "Remove the token and rotate it — assume it is already compromised. Read "
+        "credentials from the environment at run time instead.",
+    ),
+    (
+        EXCESSIVE_PERMISSIONS,
+        "EXCESSIVE_PERMISSIONS",
+        "high",
+        "Skill requests unrestricted tool access",
+        "Wildcard permissions or approval-skipping flags widen the blast radius of "
+        "everything else the skill does.",
+        "Name the specific tools the skill needs. Never ship a skill that disables "
+        "confirmation prompts.",
+    ),
+]
+
+
+def analyze_document(text: str) -> list[Finding]:
+    """Findings that come from the skill's source rather than its operations."""
+    findings: list[Finding] = []
+    for pattern, rule_id, severity, title, detail, fix in _DOCUMENT_RULES:
+        match = next(
+            (m for m in pattern.finditer(text) if not _is_negated(text, m)),
+            None,
+        )
+        if match is None:
+            continue
+        findings.append(
+            Finding(
+                rule_id=rule_id,
+                severity=severity,
+                title=title,
+                detail=detail,
+                events=[],
+                evidence=_snippet(text, match),
+                remediation=fix,
+            )
+        )
+    return findings
+
+
+def _snippet(text: str, match: re.Match[str]) -> str:
+    """The matched text with a little surrounding context, on one line."""
+    start = max(0, match.start() - 40)
+    end = min(len(text), match.end() + 40)
+    return " ".join(text[start:end].split())[:300]
