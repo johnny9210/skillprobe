@@ -25,3 +25,9 @@ to [Semantic Versioning](https://semver.org/).
 - 95.3% clean (221/232) against the human-authored SkillsBench corpus; the
   three false-positive classes it surfaced (`nc = Dataset(...)`,
   `pip install requests`, `sudo apt-get install`) are now regression tests.
+
+### Infrastructure
+- CI (GitHub Actions): ruff (ALL) + unit/integration tests across Python
+  3.11–3.13, plus a corpus check that fails the build if the SkillsBench clean
+  rate drops below 94% — the headline number cannot silently rot.
+- `scripts/corpus_check.py` runs the same check locally.

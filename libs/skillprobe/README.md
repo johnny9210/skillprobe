@@ -1,5 +1,9 @@
 # skillprobe
 
+[![CI](https://github.com/johnny9210/skillprobe/actions/workflows/ci.yml/badge.svg)](https://github.com/johnny9210/skillprobe/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
+
 Detonate an agent skill in a sandbox and judge what it actually did.
 
 Static skill scanners read `SKILL.md`. In July 2026 the [Cloak and
@@ -13,11 +17,13 @@ skillprobe takes the other half of that paper seriously: judge the skill by the
 operations it performs, not by how its source reads.
 
 ```bash
-uv add skillprobe
+# Not on PyPI yet — install from source:
+git clone https://github.com/johnny9210/skillprobe
+cd skillprobe/libs/skillprobe && uv sync
 
-skillprobe scan path/to/SKILL.md    # review one skill, or a tree of them
-skillprobe scan skills/ --json      # machine-readable, exits non-zero on findings
-skillprobe ui                       # local review UI, no account, nothing uploaded
+uv run skillprobe scan path/to/SKILL.md   # review one skill, or a tree of them
+uv run skillprobe scan skills/ --json     # machine-readable, exits non-zero on findings
+uv run skillprobe ui                      # local review UI, no account, nothing uploaded
 ```
 
 The UI takes a dropped `SKILL.md` and shows the verdict, the findings, and the
