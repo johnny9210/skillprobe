@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from skillprobe import ObservingBackend, analyze
+from skillvet import ObservingBackend, analyze
 
 pytest.importorskip("deepagents")
 
@@ -54,12 +54,12 @@ def test_shell_execution_is_observed(workspace):
     inner = LocalShellBackend(root_dir=str(workspace), virtual_mode=False)
     backend = ObservingBackend(inner)
 
-    backend.execute("echo skillprobe-was-here > marker.txt")
+    backend.execute("echo skillvet-was-here > marker.txt")
 
-    assert (workspace / "marker.txt").read_text().strip() == "skillprobe-was-here"
+    assert (workspace / "marker.txt").read_text().strip() == "skillvet-was-here"
     event = backend.recorder.events[-1]
     assert event.op == "execute"
-    assert "skillprobe-was-here" in event.subject
+    assert "skillvet-was-here" in event.subject
     assert event.ok is True
 
 

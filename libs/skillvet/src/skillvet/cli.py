@@ -1,8 +1,8 @@
 """Command line entry point.
 
-skillprobe scan SKILL.md      review a skill, print findings
-skillprobe scan dir/ --json   machine-readable, for CI
-skillprobe ui                 open the local review UI
+skillvet scan SKILL.md      review a skill, print findings
+skillvet scan dir/ --json   machine-readable, for CI
+skillvet ui                 open the local review UI
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import json
 import sys
 from pathlib import Path
 
-from skillprobe.report import Report, scan_text
+from skillvet.report import Report, scan_text
 
 _EXIT = {"block": 2, "review": 1, "fix": 1, "note": 0, "pass": 0}
 
@@ -40,7 +40,7 @@ def _build_judge(model_name: str | None, samples: int) -> object | None:
     if not model_name:
         return None
 
-    from skillprobe.judge import Judge, langchain_model
+    from skillvet.judge import Judge, langchain_model
 
     try:
         model = langchain_model(model_name)
@@ -95,8 +95,8 @@ def _print(report: Report, *, color: bool) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the skillprobe CLI. Returns the process exit code."""
-    parser = argparse.ArgumentParser(prog="skillprobe", description=__doc__)
+    """Run the skillvet CLI. Returns the process exit code."""
+    parser = argparse.ArgumentParser(prog="skillvet", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
     scan = sub.add_parser("scan", help="review a SKILL.md or a directory of them")
@@ -134,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "ui":
-        from skillprobe.web import serve
+        from skillvet.web import serve
 
         serve(args.host, args.port, open_browser=not args.no_browser)
         return 0

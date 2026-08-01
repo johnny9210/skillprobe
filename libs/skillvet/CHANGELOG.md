@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to skillprobe are documented here. The format follows
+All notable changes to skillvet are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project aims to adhere
 to [Semantic Versioning](https://semver.org/).
 
@@ -16,7 +16,7 @@ to [Semantic Versioning](https://semver.org/).
   in at position so packing does not hide the flow.
 - Execution-layer policy gate: operations can be denied at the backend
   interface, below anything the model can talk its way past.
-- CLI (`skillprobe scan`, `skillprobe ui`) and a stdlib-only local review UI.
+- CLI (`skillvet scan`, `skillvet ui`) and a stdlib-only local review UI.
 - Detection of: credential exfiltration, decode-then-execute, fetch-and-run,
   destructive commands (parsed, not pattern-matched), persistence writes,
   privilege escalation, workspace escape, environment harvesting.

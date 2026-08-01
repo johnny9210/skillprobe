@@ -11,9 +11,9 @@ import base64
 
 import pytest
 
-from skillprobe.extract import extract
-from skillprobe.report import scan_text
-from skillprobe.rules import invoked_binaries, is_package_install
+from skillvet.extract import extract
+from skillvet.report import scan_text
+from skillvet.rules import invoked_binaries, is_package_install
 
 
 def skill(body: str, *, name: str = "demo", description: str = "A helper skill.") -> str:

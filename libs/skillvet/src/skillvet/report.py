@@ -6,10 +6,10 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
-from skillprobe.events import Event
-from skillprobe.extract import extract
-from skillprobe.judge import Judge
-from skillprobe.rules import SEVERITY_ORDER, Finding, analyze, analyze_document
+from skillvet.events import Event
+from skillvet.extract import extract
+from skillvet.judge import Judge
+from skillvet.rules import SEVERITY_ORDER, Finding, analyze, analyze_document
 
 # What a marketplace gate would do with each severity.
 VERDICT = {

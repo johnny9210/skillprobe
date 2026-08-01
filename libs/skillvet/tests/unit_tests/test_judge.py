@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import pytest
 
-from skillprobe import Judge, ScriptedModel, scan_text
-from skillprobe.judge import BEHAVIOR, QUALITY, RUBRICS, _parse, verdict_json
+from skillvet import Judge, ScriptedModel, scan_text
+from skillvet.judge import BEHAVIOR, QUALITY, RUBRICS, _parse, verdict_json
 
 ALL_QUALITY_PASS = verdict_json(dict.fromkeys([c.id for c in QUALITY.criteria], True))
 ALL_BEHAVIOR_PASS = verdict_json(dict.fromkeys([c.id for c in BEHAVIOR.criteria], True))

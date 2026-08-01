@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import PurePosixPath
 from typing import Literal
 
-from skillprobe.events import Event
+from skillvet.events import Event
 
 Severity = Literal["critical", "high", "medium", "low"]
 

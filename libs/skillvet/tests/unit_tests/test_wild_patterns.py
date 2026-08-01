@@ -1,7 +1,7 @@
 """Attack classes confirmed in the wild.
 
 The categories here come from the 157 behaviourally-confirmed malicious skills
-in MaliciousAgentSkillsBench (USENIX Security 2026). Mapping skillprobe's rules
+in MaliciousAgentSkillsBench (USENIX Security 2026). Mapping skillvet's rules
 against that distribution showed five classes with no coverage; these are the
 rules added to close them.
 
@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from skillprobe.report import scan_text
+from skillvet.report import scan_text
 
 
 def skill(body: str) -> str:

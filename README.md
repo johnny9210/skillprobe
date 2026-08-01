@@ -13,7 +13,7 @@ time.
 
 | Package | Reviews | Status |
 |---|---|---|
-| [`libs/skillprobe`](libs/skillprobe) | agent **skills** (`SKILL.md`) | alpha |
+| [`libs/skillvet`](libs/skillvet) | agent **skills** (`SKILL.md`) | alpha |
 
 Planned, sharing the same observation + flow-rule core: `mcpprobe` (MCP
 servers), a rules/hooks checker. Each ships as an independent package with its
@@ -25,8 +25,8 @@ local `[tool.uv.sources]` link to any shared core.
 
 ```
 libs/
-  skillprobe/            independent package (own pyproject, own uv.lock)
-    src/skillprobe/
+  skillvet/            independent package (own pyproject, own uv.lock)
+    src/skillvet/
     tests/
       unit_tests/
       integration_tests/
@@ -37,7 +37,7 @@ libs/
 ## Working on a package
 
 ```bash
-cd libs/skillprobe
+cd libs/skillvet
 make install   # uv sync --group test
 make test
 make ui

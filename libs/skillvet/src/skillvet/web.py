@@ -5,7 +5,7 @@ a web framework first, and this has to stay runnable on a laptop belonging to
 whoever is doing the review - not on a shared server, because the detonation
 path runs untrusted code.
 
-    skillprobe ui        # http://127.0.0.1:8765
+    skillvet ui        # http://127.0.0.1:8765
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import json
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from skillprobe.report import scan_text
+from skillvet.report import scan_text
 
 MAX_UPLOAD_BYTES = 2 * 1024 * 1024
 
@@ -65,7 +65,7 @@ def serve(host: str = "127.0.0.1", port: int = 8765, *, open_browser: bool = Tru
     """Serve the local review UI until interrupted."""
     server = ThreadingHTTPServer((host, port), _Handler)
     url = f"http://{host}:{port}"
-    print(f"skillprobe ui -> {url}   (ctrl-c to stop)")
+    print(f"skillvet ui -> {url}   (ctrl-c to stop)")
     if open_browser:
         with contextlib.suppress(Exception):
             webbrowser.open(url)
@@ -80,7 +80,7 @@ def serve(host: str = "127.0.0.1", port: int = 8765, *, open_browser: bool = Tru
 PAGE = r"""<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>skillprobe</title>
+<title>skillvet</title>
 <style>
 :root{
   --bg:#fbfbfd; --panel:#fff; --ink:#14161a; --muted:#6b7280; --line:#e5e7eb;
@@ -164,7 +164,7 @@ code,.ev-cmd{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace}
 .empty{color:var(--muted);font-size:14px}
 </style></head><body><div class="wrap">
 
-<header><h1>skillprobe</h1><span class="tag">static review</span></header>
+<header><h1>skillvet</h1><span class="tag">static review</span></header>
 <p class="lede">Drop a <code>SKILL.md</code> to see what it instructs an agent to do.
 Findings come from the <em>order</em> of those operations, not from patterns in the
 text — reading a credential is one thing, reading it and then sending it somewhere

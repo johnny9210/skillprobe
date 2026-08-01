@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from skillprobe import ObservingBackend, analyze
+from skillvet import ObservingBackend, analyze
 
 
 class StubBackend:
@@ -250,7 +250,7 @@ def test_policy_can_block_an_operation():
     backend = ObservingBackend(StubBackend(), policy=deny_credentials)
     result = backend.read("/home/user/.aws/credentials")
 
-    assert "Blocked by skillprobe policy" in result["error"]
+    assert "Blocked by skillvet policy" in result["error"]
     event = backend.recorder.events[-1]
     assert event.ok is False
     assert "denied" in event.error

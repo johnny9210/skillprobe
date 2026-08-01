@@ -25,7 +25,7 @@ demo: ## Run the packed-skill detonation demo
 	uv run python examples/packed_skill_demo.py
 
 ui: ## Open the local review UI
-	uv run skillprobe ui
+	uv run skillvet ui
 
 all: lint test ## Lint then test
 

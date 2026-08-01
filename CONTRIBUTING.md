@@ -1,6 +1,6 @@
-# Contributing to skillprobe
+# Contributing to skillvet
 
-Thanks for considering a contribution. skillprobe reviews untrusted agent
+Thanks for considering a contribution. skillvet reviews untrusted agent
 skills, so the bar for its own code is a little higher than usual — a false
 positive trains people to ignore the tool, and a false negative is a skill that
 should have been blocked.
@@ -23,7 +23,7 @@ should have been blocked.
 ## Development
 
 ```bash
-cd libs/skillprobe
+cd libs/skillvet
 make install      # uv sync --group test
 make test         # unit tests
 make integration  # against real deepagents backends (no network)
@@ -39,10 +39,10 @@ PR.
 - Run `make lint test` before opening the PR.
 - Describe *what a skill would do* to trigger (or evade) the behaviour you
   changed — that framing reviews faster than a code diff alone.
-- New detections get an entry in `libs/skillprobe/CHANGELOG.md` under
+- New detections get an entry in `libs/skillvet/CHANGELOG.md` under
   `Unreleased`.
 
 ## Reporting a security issue
 
-Do not open a public issue for a vulnerability in skillprobe itself. See
+Do not open a public issue for a vulnerability in skillvet itself. See
 [SECURITY.md](SECURITY.md).

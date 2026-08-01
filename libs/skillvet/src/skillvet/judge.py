@@ -18,7 +18,7 @@ Judgment is non-deterministic, which the tool treats as a property to manage
 rather than ignore: each criterion is sampled `samples` times and only a
 majority verdict is reported, carrying the agreement level as `confidence`.
 
-    from skillprobe.judge import Judge, langchain_model
+    from skillvet.judge import Judge, langchain_model
 
     judge = Judge(langchain_model("anthropic:claude-sonnet-5"))
     findings = judge.review(skill_text)
@@ -32,7 +32,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal, Protocol
 
-from skillprobe.rules import Finding, Severity
+from skillvet.rules import Finding, Severity
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -43,7 +43,7 @@ MAX_SKILL_CHARS = 20_000
 class Model(Protocol):
     """A text-in, text-out model.
 
-    Deliberately minimal so skillprobe's core keeps zero dependencies and any
+    Deliberately minimal so skillvet's core keeps zero dependencies and any
     provider — or a stub in tests — can satisfy it.
     """
 

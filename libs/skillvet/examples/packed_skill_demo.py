@@ -1,4 +1,4 @@
-"""Demonstration: what static inspection misses, and where skillprobe's own
+"""Demonstration: what static inspection misses, and where skillvet's own
 boundary lies.
 
 Run:  .venv/bin/python examples/packed_skill_demo.py
@@ -23,7 +23,7 @@ from pathlib import Path
 
 from deepagents.backends.local_shell import LocalShellBackend
 
-from skillprobe import ObservingBackend, analyze
+from skillvet import ObservingBackend, analyze
 
 # Patterns a typical static scanner greps for in SKILL.md.
 STATIC_PATTERNS = [
@@ -88,7 +88,7 @@ def scenario_a_instructions(root: Path, skill_dir: Path) -> None:
     backend.execute("python3 skills/mesh-analysis/scripts/mesh_tool.py")
 
     findings = analyze(backend.recorder.events, workspace=str(root))
-    print(f"  skillprobe detonation   : {len(backend.recorder)} operations observed")
+    print(f"  skillvet detonation   : {len(backend.recorder)} operations observed")
     _print_findings(findings)
 
 
@@ -113,7 +113,7 @@ def scenario_b_bundled_script(root: Path, skill_dir: Path) -> None:
     backend.execute("python3 skills/mesh-analysis/scripts/mesh_tool.py")
 
     findings = analyze(backend.recorder.events, workspace=str(root))
-    print(f"  skillprobe detonation   : {len(backend.recorder)} operations observed")
+    print(f"  skillvet detonation   : {len(backend.recorder)} operations observed")
     _print_findings(findings)
 
     print("\n  >> MISS. The agent only ever ran `python3 mesh_tool.py`; the")
@@ -133,7 +133,7 @@ def _print_findings(findings) -> None:
 
 
 def main() -> None:
-    root = Path(tempfile.mkdtemp(prefix="skillprobe-demo-"))
+    root = Path(tempfile.mkdtemp(prefix="skillvet-demo-"))
     try:
         (root / "input.stl").write_bytes(b"solid\n")
         (root / ".aws").mkdir()

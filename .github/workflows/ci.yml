@@ -18,7 +18,7 @@ env:
 
 defaults:
   run:
-    working-directory: libs/skillprobe
+    working-directory: libs/skillvet
 
 jobs:
   lint:

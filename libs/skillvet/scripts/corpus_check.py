@@ -17,7 +17,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from skillprobe.report import scan_text
+from skillvet.report import scan_text
 
 
 def main(argv: list[str] | None = None) -> int:

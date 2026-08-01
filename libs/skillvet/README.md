@@ -1,6 +1,6 @@
-# skillprobe
+# skillvet
 
-[![CI](https://github.com/johnny9210/skillprobe/actions/workflows/ci.yml/badge.svg)](https://github.com/johnny9210/skillprobe/actions/workflows/ci.yml)
+[![CI](https://github.com/johnny9210/skillvet/actions/workflows/ci.yml/badge.svg)](https://github.com/johnny9210/skillvet/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org)
 
@@ -13,17 +13,17 @@ over 90%**, and structural obfuscation reached 96% against a hybrid
 deterministic+LLM scanner. Packing works because the payload is not in the file
 at install time — it is restored during agent execution.
 
-skillprobe takes the other half of that paper seriously: judge the skill by the
+skillvet takes the other half of that paper seriously: judge the skill by the
 operations it performs, not by how its source reads.
 
 ```bash
 # Not on PyPI yet — install from source:
-git clone https://github.com/johnny9210/skillprobe
-cd skillprobe/libs/skillprobe && uv sync
+git clone https://github.com/johnny9210/skillvet
+cd skillvet/libs/skillvet && uv sync
 
-uv run skillprobe scan path/to/SKILL.md   # review one skill, or a tree of them
-uv run skillprobe scan skills/ --json     # machine-readable, exits non-zero on findings
-uv run skillprobe ui                      # local review UI, no account, nothing uploaded
+uv run skillvet scan path/to/SKILL.md   # review one skill, or a tree of them
+uv run skillvet scan skills/ --json     # machine-readable, exits non-zero on findings
+uv run skillvet ui                      # local review UI, no account, nothing uploaded
 ```
 
 The UI takes a dropped `SKILL.md` and shows the verdict, the findings, and the
@@ -66,8 +66,8 @@ without adding signal.
 
 ```bash
 uv sync --extra judge
-uv run skillprobe scan SKILL.md --judge          # adds quality + intent scoring
-uv run skillprobe scan SKILL.md --judge-samples 5
+uv run skillvet scan SKILL.md --judge          # adds quality + intent scoring
+uv run skillvet scan SKILL.md --judge-samples 5
 ```
 
 Judgment is non-deterministic, so it is treated as something to manage rather
@@ -87,7 +87,7 @@ without touching the judging logic.
 
 ## Two modes
 
-**Static review** (`skillprobe scan`, the UI) recovers the operations a skill
+**Static review** (`skillvet scan`, the UI) recovers the operations a skill
 *instructs* — from code fences, indented blocks, inline spans and prose — and
 runs the flow rules over that sequence. Base64 blobs are decoded and their
 contents spliced back in at the position they appeared, so packing hides a
@@ -117,7 +117,7 @@ neither.
 [MaliciousAgentSkillsBench](https://github.com/protectskills/MaliciousAgentSkillsBench)
 (USENIX Security 2026) publishes the attack-pattern labels for 157
 behaviourally-confirmed malicious skills found on public marketplaces. Mapping
-skillprobe's rules against that distribution:
+skillvet's rules against that distribution:
 
 | attack pattern | in 157 skills | covered by |
 |---|---:|---|
@@ -140,7 +140,7 @@ falling entirely outside the ruleset. Five of these rules exist *because* of
 this mapping — the first pass covered 82.9% and missed five skills entirely.
 
 This measures taxonomy coverage, not detection rate: the dataset withholds the
-skill bodies to prevent misuse, so it says which attack classes skillprobe can
+skill bodies to prevent misuse, so it says which attack classes skillvet can
 express, not what fraction of real files it would flag.
 
 ## False positives

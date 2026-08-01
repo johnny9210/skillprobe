@@ -1,15 +1,15 @@
 # Security Policy
 
-skillprobe is a tool for reviewing untrusted agent skills, which means it
+skillvet is a tool for reviewing untrusted agent skills, which means it
 handles hostile input by design. Its own trust boundaries are documented in
-[libs/skillprobe/THREAT_MODEL.md](libs/skillprobe/THREAT_MODEL.md); please read
+[libs/skillvet/THREAT_MODEL.md](libs/skillvet/THREAT_MODEL.md); please read
 that first — several sharp edges are known and stated there, not bugs.
 
 ## Reporting a vulnerability
 
 Report privately, not in a public issue:
 
-- Use GitHub's **[Report a vulnerability](https://github.com/johnny9210/skillprobe/security/advisories/new)**
+- Use GitHub's **[Report a vulnerability](https://github.com/johnny9210/skillvet/security/advisories/new)**
   (Security → Advisories) on this repository, **or**
 - email the maintainer listed on the GitHub profile.
 
@@ -20,7 +20,7 @@ reproduction. We aim to acknowledge within a few days.
 
 - A malicious skill that produces **no finding** it should have (a false
   negative that lets a real threat through).
-- A crafted `SKILL.md` that makes skillprobe itself execute code, exhaust
+- A crafted `SKILL.md` that makes skillvet itself execute code, exhaust
   resources, or escape its intended read-only static path.
 - Any way the review UI leaks data off the local machine.
 
@@ -39,4 +39,4 @@ These are documented in the threat model and are not accepted as reports:
 
 ## Supported versions
 
-skillprobe is pre-1.0. Only the latest `main` receives fixes.
+skillvet is pre-1.0. Only the latest `main` receives fixes.

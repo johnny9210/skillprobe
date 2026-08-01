@@ -16,7 +16,7 @@ import time
 from collections.abc import Callable
 from typing import Any, Protocol
 
-from skillprobe.events import OPS, Recorder
+from skillvet.events import OPS, Recorder
 
 
 class Policy(Protocol):
@@ -176,7 +176,7 @@ def _summarize(result: Any) -> dict[str, Any]:
 
 def _denied_result(op: str, reason: str) -> Any:
     """Shape a refusal the agent can read, matching each op's result type."""
-    message = f"Blocked by skillprobe policy: {reason}"
+    message = f"Blocked by skillvet policy: {reason}"
     if op == "execute":
         return {"exit_code": 126, "stdout": "", "stderr": message}
     return {"error": message}

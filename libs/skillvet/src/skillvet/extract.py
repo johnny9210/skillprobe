@@ -18,8 +18,8 @@ import binascii
 import re
 from dataclasses import dataclass
 
-from skillprobe.events import Event
-from skillprobe.rules import CREDENTIAL_PATHS
+from skillvet.events import Event
+from skillvet.rules import CREDENTIAL_PATHS
 
 # Fenced blocks, with or without a language tag.
 _FENCE = re.compile(r"```([a-zA-Z0-9_+-]*)\n(.*?)```", re.DOTALL)
