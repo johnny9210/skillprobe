@@ -26,6 +26,20 @@ to [Semantic Versioning](https://semver.org/).
   three false-positive classes it surfaced (`nc = Dataset(...)`,
   `pip install requests`, `sudo apt-get install`) are now regression tests.
 
+### Added — model judgment
+- `Judge` scores a skill against rubrics for what deterministic rules cannot
+  read: whether the skill *works* (description never triggers, no-op padding,
+  missing negative cases) and whether its *intent* is trustworthy (concealment,
+  prompt-level approval theatre, run-time indirection).
+- Non-determinism is managed rather than ignored — each criterion is sampled N
+  times, only majority verdicts are reported, and agreement rides along as
+  `confidence`. Low-agreement verdicts are dropped.
+- Findings carry `source` (`rule` vs `judge`); the CLI and UI show provenance so
+  a match is not mistaken for a score.
+- `Model` is a two-method protocol, so the core keeps zero runtime dependencies.
+  `langchain_model()` adapts any LangChain chat model under the `judge` extra;
+  `ScriptedModel` keeps the test suite offline and free.
+
 ### Infrastructure
 - CI (GitHub Actions): ruff (ALL) + unit/integration tests across Python
   3.11–3.13, plus a corpus check that fails the build if the SkillsBench clean

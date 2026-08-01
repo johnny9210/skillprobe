@@ -8,6 +8,7 @@ from typing import Any
 
 from skillprobe.events import Event
 from skillprobe.extract import extract
+from skillprobe.judge import Judge
 from skillprobe.rules import SEVERITY_ORDER, Finding, analyze
 
 # What a marketplace gate would do with each severity.
@@ -73,15 +74,28 @@ class Report:
         }
 
 
-def scan_text(text: str, *, name: str = "skill", workspace: str = "/root") -> Report:
+def scan_text(
+    text: str,
+    *,
+    name: str = "skill",
+    workspace: str = "/root",
+    judge: Judge | None = None,
+) -> Report:
     """Static path: recover the intended operations from source, then judge them.
 
     This does not execute anything, so it is safe to run against a skill you do
     not trust. It sees what the skill instructs; it cannot see what a bundled
     binary would do once invoked.
+
+    Passing a `Judge` adds model-scored findings — skill quality and suspicious
+    intent — alongside the deterministic ones. Those carry `source="judge"` and
+    a confidence, because they are opinions rather than matches.
     """
     extraction = extract(text)
     findings = analyze(extraction.events, workspace=workspace)
+    if judge is not None:
+        findings = [*findings, *judge.review(text)]
+        findings.sort(key=lambda f: SEVERITY_ORDER[f.severity])
     return Report(
         name=name,
         mode="static",

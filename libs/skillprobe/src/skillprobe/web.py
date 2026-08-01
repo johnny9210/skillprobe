@@ -279,7 +279,9 @@ function render(d){
         <div class="ftop">
           <span class="sev">${f.severity}</span>
           <span class="rid">${esc(f.rule_id)}</span>
-          <span class="rid">→ operation ${f.events.join(', ')}</span>
+          <span class="rid">${f.source === 'judge'
+            ? `judged · ${Math.round((f.confidence || 0) * 100)}% agreement`
+            : `→ operation ${f.events.join(', ')}`}</span>
           <div class="ftitle">${esc(f.title)}</div>
         </div>
         <div class="fdetail">${esc(f.detail)}</div>

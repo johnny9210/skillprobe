@@ -31,6 +31,36 @@ def _skill_files(target: Path) -> list[Path]:
     return sorted(target.rglob("SKILL.md"))
 
 
+def _build_judge(model_name: str | None, samples: int) -> object | None:
+    """Construct the judge, turning setup failures into readable advice.
+
+    Both likely failures here are configuration, not bugs: the extra is not
+    installed, or no provider key is set. Neither deserves a traceback.
+    """
+    if not model_name:
+        return None
+
+    from skillprobe.judge import Judge, langchain_model
+
+    try:
+        model = langchain_model(model_name)
+        # Providers construct lazily and only authenticate on first use, so a
+        # missing key would otherwise surface as a traceback mid-scan. Spend one
+        # trivial call to fail here, with advice, instead.
+        model.complete("Reply with OK.", "ping")
+    except ImportError as exc:
+        raise RuntimeError(str(exc)) from exc
+    except Exception as exc:
+        msg = (
+            f"could not reach judge model {model_name!r}: {exc}\n"
+            "Set the provider's API key (e.g. ANTHROPIC_API_KEY), or pass another "
+            "model with --judge <provider:model>. Static review needs no key."
+        )
+        raise RuntimeError(msg) from exc
+
+    return Judge(model, samples=samples)
+
+
 def _print(report: Report, *, color: bool) -> None:
     def tint(text: str, severity: str) -> str:
         return f"{_COLOR[severity]}{text}{_RESET}" if color else text
@@ -41,9 +71,15 @@ def _print(report: Report, *, color: bool) -> None:
     print(f"  {report.verdict_detail}")
 
     for finding in report.findings:
+        # Where it came from decides how much weight it carries: a rule that
+        # matched is a fact, a judge that scored is an opinion.
+        if finding.source == "judge":
+            provenance = f"(judged, {finding.confidence:.0%} agreement)"
+        else:
+            provenance = f"(operation {', '.join(map(str, finding.events))})"
         print(
             f"\n  {tint(finding.severity.upper(), finding.severity)}  {finding.rule_id}"
-            f"  (operation {', '.join(map(str, finding.events))})"
+            f"  {provenance}"
         )
         print(f"    {finding.title}")
         print(f"    {finding.detail}")
@@ -73,6 +109,22 @@ def main(argv: list[str] | None = None) -> int:
         choices=["critical", "high", "medium", "low", "never"],
         help="lowest severity that should fail the run (default: critical)",
     )
+    scan.add_argument(
+        "--judge",
+        nargs="?",
+        const="anthropic:claude-sonnet-5",
+        metavar="MODEL",
+        help=(
+            "also score skill quality and intent with a model (costs API calls; "
+            "needs the judge extra and a provider key). Optionally name the model."
+        ),
+    )
+    scan.add_argument(
+        "--judge-samples",
+        type=int,
+        default=3,
+        help="how many times to ask the judge per rubric, majority wins (default: 3)",
+    )
 
     ui = sub.add_parser("ui", help="open the local review UI")
     ui.add_argument("--port", type=int, default=8765)
@@ -87,6 +139,11 @@ def main(argv: list[str] | None = None) -> int:
         serve(args.host, args.port, open_browser=not args.no_browser)
         return 0
 
+    return _run_scan(args)
+
+
+def _run_scan(args: argparse.Namespace) -> int:
+    """Review the requested path and return the process exit code."""
     if not args.path.exists():
         print(f"no such path: {args.path}", file=sys.stderr)
         return 3
@@ -96,7 +153,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"no SKILL.md found under {args.path}", file=sys.stderr)
         return 3
 
-    reports = [scan_text(f.read_text(errors="ignore"), name=str(f)) for f in files]
+    try:
+        judge = _build_judge(args.judge, args.judge_samples)
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        return 3
+
+    reports = [scan_text(f.read_text(errors="ignore"), name=str(f), judge=judge) for f in files]
 
     if args.json:
         print(json.dumps([r.to_dict() for r in reports], indent=2, ensure_ascii=False))

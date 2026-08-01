@@ -51,6 +51,40 @@ it from pattern matching on a file:
 
 Neither operation is conclusive alone. The ordering is the finding.
 
+## Two layers of judgment
+
+Deterministic rules answer *is this dangerous* for risks with a shape a pattern
+can match. Two questions they cannot answer go to a model instead — and only
+those, because a judge that re-litigates `rm -rf /` adds cost and variance
+without adding signal.
+
+| | rule engine | judge |
+|---|---|---|
+| **is it dangerous** | ✅ credential flow, destructive commands, packing | — |
+| **does it work** | — | ✅ description never triggers, no-op padding, missing negative cases |
+| **is the intent trustworthy** | — | ✅ concealment, fake approval gates, run-time indirection |
+
+```bash
+uv sync --extra judge
+uv run skillprobe scan SKILL.md --judge          # adds quality + intent scoring
+uv run skillprobe scan SKILL.md --judge-samples 5
+```
+
+Judgment is non-deterministic, so it is treated as something to manage rather
+than ignore: each criterion is sampled several times, only a majority verdict is
+reported, and the agreement level rides along as confidence. Findings are
+labelled `source: "rule"` or `source: "judge"` — a match is a fact, a score is
+an opinion, and a reviewer needs to see which is which.
+
+```
+[CRITICAL] CREDENTIAL_EXFILTRATION    (ops [5, 6])
+[CRITICAL] BEHAVIOR_NO_INDIRECTION    (judged 100%)
+[MEDIUM  ] QUALITY_NEGATIVE_CASES     (judged 100%)
+```
+
+Rubrics live in `judge.py` as data, so criteria can be reviewed and diffed
+without touching the judging logic.
+
 ## Two modes
 
 **Static review** (`skillprobe scan`, the UI) recovers the operations a skill

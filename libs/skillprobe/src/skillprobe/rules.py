@@ -29,7 +29,12 @@ SEVERITY_ORDER: dict[Severity, int] = {"critical": 0, "high": 1, "medium": 2, "l
 
 @dataclass
 class Finding:
-    """A single rule hit, carrying the events it was derived from."""
+    """A single finding, carrying the events it was derived from.
+
+    `source` separates deterministic rule hits from model judgment. The two
+    carry different confidence and a reviewer needs to see which is which: a
+    regex that matched is a fact, a judge that scored is an opinion.
+    """
 
     rule_id: str
     severity: Severity
@@ -38,6 +43,8 @@ class Finding:
     events: list[int] = field(default_factory=list)
     evidence: str = ""
     remediation: str = ""
+    source: Literal["rule", "judge"] = "rule"
+    confidence: float | None = None
 
     def to_dict(self) -> dict:
         """Return the finding as a plain dict."""
@@ -49,6 +56,8 @@ class Finding:
             "events": self.events,
             "evidence": self.evidence,
             "remediation": self.remediation,
+            "source": self.source,
+            "confidence": self.confidence,
         }
 
 
